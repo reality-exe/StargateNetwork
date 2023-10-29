@@ -3,7 +3,7 @@ const { createClient } = require("@supabase/supabase-js");
 const { WebSocketServer } = require("ws");
 const { supabase_url, supabase_key } = process.env;
 
-const wss = new WebSocketServer({ port: 9067 });
+const wss = new WebSocketServer({ port: 9066 });
 
 const supabase = createClient(supabase_url, supabase_key);
 
@@ -125,10 +125,11 @@ wss.on("connection", async (ws) => {
             .select();
           console.log(json.dialed_address);
 
-          ws.send('{"code":"200", "message":"Wormhole established"}');
+          ws.send('{"code":200, "message":"Wormhole established"}');
         }
         break;
       default:
+        ws.send('{"code":400, "message":"No request type given"}')
         break;
     }
   });
