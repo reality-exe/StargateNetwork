@@ -6,7 +6,7 @@ const { supabase_url, supabase_key } = process.env;
 const wss = new WebSocketServer({ port: 9066 });
 
 const supabase = createClient(supabase_url, supabase_key);
-
+var db_channel = supabase.channel("events");
 wss.on("connection", async (ws) => {
   console.log("New connection");
   var sessionData = {
@@ -14,6 +14,24 @@ wss.on("connection", async (ws) => {
     code: "",
     host_id: "",
   };
+
+  function supabase_subscribe(payload) {
+    console.log(payload);
+    let new_data = payload.new;
+
+    switch (new_data.gate_status) {
+      case "IDLE":
+        break;
+      case "OUTGOING":
+        break;
+      case "INCOMING":
+        ws.send("Incoming wormhole");
+        break;
+
+      default:
+        break;
+    }
+  }
 
   ws.on("message", async (msg) => {
     let json = JSON.parse(msg.toString());
@@ -71,23 +89,20 @@ wss.on("connection", async (ws) => {
               gate_status: "IDLE",
               current_users: json.current_users,
               max_users: json.max_users,
+              public_gate: json.public,
             },
           ]);
-          // console.log(error.message)
+          // console.log(error ?? "No error");
+          console.log(data);
 
-          supabase
-            .channel("gates")
+          db_channel = supabase
+            .channel(`gate:${sessionData.address}`)
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "gates" },
-              (payload) => {
-                console.log("Change received!", payload);
-              }
+              supabase_subscribe
             )
-            .subscribe((status, err) => {
-              console.log(status);
-              console.log(err ?? "E");
-            });
+            .subscribe();
 
           ws.send('{ code: 200, message: "Address accepted" }');
         } else {
@@ -95,7 +110,6 @@ wss.on("connection", async (ws) => {
           break;
         }
         break;
-
       case "dialRequest":
         if (json.dialed_address == sessionData.address) {
           ws.send('{"code": 403, "message":"Gate is busy"}');
@@ -128,17 +142,20 @@ wss.on("connection", async (ws) => {
           ws.send('{"code":200, "message":"Wormhole established"}');
         }
         break;
+      case "keepAlive":
+        break;
       default:
-        ws.send('{"code":400, "message":"No request type given"}')
+        ws.send('{"code":400, "message":"No request type given"}');
         break;
     }
   });
 
   ws.on("close", async (code, reason) => {
     console.log(
-      `Connectiong Closed.\nCode: ${code.toString()}\nReason: ${reason}`
+      `Connection Closed.\nCode: ${code.toString()}\nReason: ${reason}`
     );
     if (sessionData.address != "") {
+      db_channel.unsubscribe();
       await supabase.from("gates").delete().eq("host_id", sessionData.host_id);
     }
   });
