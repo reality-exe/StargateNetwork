@@ -14,6 +14,12 @@ wss.on("connection", async (ws) => {
     code: "",
     host_id: "",
     incoming: false,
+
+    dialed_session: {
+      address: "",
+      code: "",
+      host_id: "",
+    },
   };
 
   function supabase_subscribe(payload) {
@@ -55,8 +61,9 @@ wss.on("connection", async (ws) => {
           .select("*")
           .eq("gate_address", json.gate_address)
           .single();
-          
-        if (data == null) { // Return 404 if there is no gate with that address
+
+        if (data == null) {
+          // Return 404 if there is no gate with that address
           ws.send('{"code":404, "message":"Gate not found"}');
           break;
         } // Return 302 if the outgoing gate has a different group code from the dialing gate
@@ -76,6 +83,10 @@ wss.on("connection", async (ws) => {
         break;
       case "requestAddress":
         console.log("Request address");
+        if (json.gate_address.length < 6) {
+          ws.send('{ code: 400, message: "Address too short" }');
+          break;
+        }
         var { data: data } = await supabase
           .from("gates")
           .select("*")
@@ -150,6 +161,12 @@ wss.on("connection", async (ws) => {
         }
         break;
       case "keepAlive":
+        break;
+      case "closeWormhole":
+        break;
+      case "test":
+        console.log("Recieved test");
+        ws.send('{"code":200, "message":"Test"}');
         break;
       default:
         ws.send('{"code":400, "message":"No request type given"}');
