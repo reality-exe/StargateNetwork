@@ -13,6 +13,7 @@ wss.on("connection", async (ws) => {
     address: "",
     code: "",
     host_id: "",
+    incoming: false,
   };
 
   function supabase_subscribe(payload) {
@@ -21,11 +22,17 @@ wss.on("connection", async (ws) => {
 
     switch (new_data.gate_status) {
       case "IDLE":
+        if (sessionData.incoming) {
+          ws.send("Close wormhole");
+          sessionData.incoming = false;
+          break;
+        }
         break;
       case "OUTGOING":
         break;
       case "INCOMING":
         ws.send("Incoming wormhole");
+        sessionData.incoming = true;
         break;
 
       default:
@@ -48,8 +55,8 @@ wss.on("connection", async (ws) => {
           .select("*")
           .eq("gate_address", json.gate_address)
           .single();
-        console.log(data ?? "None found");
-        if (data == null) {
+          
+        if (data == null) { // Return 404 if there is no gate with that address
           ws.send('{"code":404, "message":"Gate not found"}');
           break;
         } // Return 302 if the outgoing gate has a different group code from the dialing gate
