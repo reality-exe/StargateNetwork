@@ -14,12 +14,11 @@ wss.on("connection", async (ws) => {
     code: "",
     host_id: "",
     incoming: false,
-
-    dialed_session: {
-      address: "",
-      code: "",
-      host_id: "",
-    },
+  };
+  var dialed_session = {
+    address: "",
+    code: "",
+    host_id: "",
   };
 
   function supabase_subscribe(payload) {
@@ -50,7 +49,7 @@ wss.on("connection", async (ws) => {
 
   ws.on("message", async (msg) => {
     let json = JSON.parse(msg.toString());
-    console.log(json)
+    console.log(json);
     switch (json.type) {
       case "validateAddress":
         // Return 400 if address' length is too short
@@ -90,7 +89,7 @@ wss.on("connection", async (ws) => {
         break;
       case "requestAddress":
         console.log("Request address");
-        console.log(json)
+        console.log(json);
         if (json.gate_address.length < 6) {
           ws.send('{ code: 400, message: "Address too short" }');
           break;
@@ -102,15 +101,19 @@ wss.on("connection", async (ws) => {
           .single();
         console.log(error ?? "No error");
 
-        if (data.session_id == json.session_id) {
-          ws.send("403");
-          break;
-        }
-
         if (data == null) {
           sessionData.address = json.gate_address;
           sessionData.code = json.gate_code;
           sessionData.host_id = json.host_id;
+          var { data: d, error } = await supabase
+            .from("gates")
+            .select("*")
+            .eq("session_id", json.session_id)
+            .single();
+          if (d == !null) {
+            ws.send("403");
+            break;
+          }
           var { data: data, error } = await supabase.from("gates").insert([
             {
               host_id: json.host_id,
@@ -122,6 +125,7 @@ wss.on("connection", async (ws) => {
               current_users: json.current_users,
               max_users: json.max_users,
               public_gate: json.public,
+              name: json.gate_name,
             },
           ]);
           // console.log(error ?? "No error");
@@ -168,9 +172,14 @@ wss.on("connection", async (ws) => {
             .update({ gate_status: "INCOMING" })
             .eq("gate_address", json.gate_address)
             // .eq("gate_code", json.dialed_code)
-            .select();
-          console.log(json.gate_address);
+            .select("*")
+            .single();
 
+          dialed_session.address = d.gate_address;
+          dialed_session.code = d.gate_code;
+          dialed_session.host_id = d.host_id;
+
+          ws.send(`${JSON.stringify(d)}`);
           ws.send("CSDialCheck:200");
           ws.send(`CSDialedSessionURL:${data.session_id}`);
         }
@@ -178,19 +187,27 @@ wss.on("connection", async (ws) => {
       case "keepAlive":
         break;
       case "closeWormhole":
-        var { data: _this, error } = await supabase
+        var { data: _this, error: _errorthis } = await supabase
           .from("gates")
           .update({ gate_status: "IDLE" })
           .eq("gate_address", sessionData.address)
           .eq("gate_code", sessionData.code)
           .select();
+        console.log(_errorthis ?? "No error");
 
-        var { data: _other, error } = await supabase
+        var { data: _other, error: _errorother } = await supabase
           .from("gates")
           .update({ gate_status: "IDLE" })
-          .eq("gate_address", sessionData.dialed_session.address)
-          .eq("gate_code", sessionData.dialed_session.code)
+          .eq("gate_address", dialed_session.address)
+          .eq("gate_code", dialed_session.code)
           .select();
+        console.log(_errorother ?? "No error");
+
+        dialed_session.address = "";
+        dialed_session.code = "";
+        dialed_session.host_id = "";
+
+        console.log(JSON.stringify(dialed_session));
         break;
       case "updateData":
         var { data: data, error } = await supabase
@@ -220,6 +237,14 @@ wss.on("connection", async (ws) => {
     );
     if (sessionData.address != "") {
       db_channel.unsubscribe();
+
+      if (dialed_session.address != "") {
+        var { data: data, error } = await supabase
+          .from("gates")
+          .update({ gate_status: "IDLE" })
+          .eq("gate_address", dialed_session.address)
+          .single();
+      }
       await supabase
         .from("gates")
         .delete()
