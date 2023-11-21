@@ -73,7 +73,7 @@ wss.on("connection", async (ws) => {
           ws.send("CSValidCheck:404");
           break;
         } // Return 302 if the outgoing gate has a different group code from the dialing gate
-        else if (data.gate_code != "") {
+        else if (data.gate_code != sessionData.code) {
           ws.send("CSValidCheck:302");
           break;
         } // Return 200 if gate exists, and is not already open
@@ -88,8 +88,8 @@ wss.on("connection", async (ws) => {
 
         break;
       case "requestAddress":
-        console.log("Request address");
-        console.log(json);
+        // console.log("Request address");
+        // console.log(json);
         if (json.gate_address.length < 6) {
           ws.send('{ code: 400, message: "Address too short" }');
           break;
@@ -99,7 +99,7 @@ wss.on("connection", async (ws) => {
           .select("*")
           .eq("gate_address", json.gate_address)
           .single();
-        console.log(error ?? "No error");
+        // console.log(error ?? "No error");
 
         if (data == null) {
           sessionData.address = json.gate_address;
@@ -128,8 +128,8 @@ wss.on("connection", async (ws) => {
               name: json.gate_name,
             },
           ]);
-          // console.log(error ?? "No error");
-          console.log(data);
+          // // console.log(error ?? "No error");
+          // console.log(data);
 
           db_channel = supabase
             .channel(`gate:${sessionData.address}`)
@@ -141,14 +141,16 @@ wss.on("connection", async (ws) => {
             .subscribe();
 
           ws.send('{ code: 200, message: "Address accepted" }');
-        } else {
-          ws.send("403");
+        } else if (data.session_id == json.session_id) {
+          ws.send('{ code: 200, message: "Address accepted" }');
           break;
+        } else {
+          ws.send('403');
         }
         break;
       case "dialRequest":
         if (json.gate_address == sessionData.address) {
-          ws.send('{"code": 403, "message":"Gate is busy"}');
+          ws.send('CSDialCheck:404');
           break;
         }
 
@@ -193,7 +195,7 @@ wss.on("connection", async (ws) => {
           .eq("gate_address", sessionData.address)
           .eq("gate_code", sessionData.code)
           .select();
-        console.log(_errorthis ?? "No error");
+        // console.log(_errorthis ?? "No error");
 
         var { data: _other, error: _errorother } = await supabase
           .from("gates")
@@ -201,13 +203,13 @@ wss.on("connection", async (ws) => {
           .eq("gate_address", dialed_session.address)
           .eq("gate_code", dialed_session.code)
           .select();
-        console.log(_errorother ?? "No error");
+        // console.log(_errorother ?? "No error");
 
         dialed_session.address = "";
         dialed_session.code = "";
         dialed_session.host_id = "";
 
-        console.log(JSON.stringify(dialed_session));
+        // console.log(JSON.stringify(dialed_session));
         break;
       case "updateData":
         var { data: data, error } = await supabase
@@ -219,10 +221,10 @@ wss.on("connection", async (ws) => {
           })
           .eq("gate_address", sessionData.address)
           .select();
-        console.log(error ?? "e");
+        // console.log(error ?? "e");
         break;
       case "test":
-        console.log("Recieved test");
+        // console.log("Recieved test");
         ws.send('{"code":200, "message":"Test"}');
         break;
       default:
@@ -232,9 +234,9 @@ wss.on("connection", async (ws) => {
   });
 
   ws.on("close", async (code, reason) => {
-    console.log(
-      `Connection Closed.\nCode: ${code.toString()}\nReason: ${reason}`
-    );
+    // console.log(
+      // `Connection Closed.\nCode: ${code.toString()}\nReason: ${reason}`
+    // );
     if (sessionData.address != "") {
       db_channel.unsubscribe();
 
@@ -243,6 +245,7 @@ wss.on("connection", async (ws) => {
           .from("gates")
           .update({ gate_status: "IDLE" })
           .eq("gate_address", dialed_session.address)
+          .eq("gate_code", dialed_session.code)
           .single();
       }
       await supabase
