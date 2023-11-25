@@ -6,7 +6,16 @@ const { supabase_url, supabase_key } = process.env;
 const wss = new WebSocketServer({ port: 9066 });
 
 const supabase = createClient(supabase_url, supabase_key);
+
 var db_channel = supabase.channel("events");
+
+async function flushDatabase() {
+  await supabase.from("gates").delete().neq("gate_status", "PLACEHOLDER");
+  
+}
+flushDatabase();
+
+
 wss.on("connection", async (ws) => {
   console.log("New connection");
   var sessionData = {
@@ -145,12 +154,12 @@ wss.on("connection", async (ws) => {
           ws.send('{ code: 200, message: "Address accepted" }');
           break;
         } else {
-          ws.send('403');
+          ws.send("403");
         }
         break;
       case "dialRequest":
         if (json.gate_address == sessionData.address) {
-          ws.send('CSDialCheck:404');
+          ws.send("CSDialCheck:404");
           break;
         }
 
@@ -235,7 +244,7 @@ wss.on("connection", async (ws) => {
 
   ws.on("close", async (code, reason) => {
     // console.log(
-      // `Connection Closed.\nCode: ${code.toString()}\nReason: ${reason}`
+    // `Connection Closed.\nCode: ${code.toString()}\nReason: ${reason}`
     // );
     if (sessionData.address != "") {
       db_channel.unsubscribe();
