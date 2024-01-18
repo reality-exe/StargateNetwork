@@ -11,10 +11,8 @@ var db_channel = supabase.channel("events");
 
 async function flushDatabase() {
   await supabase.from("gates").delete().neq("gate_status", "PLACEHOLDER");
-  
 }
 flushDatabase();
-
 
 wss.on("connection", async (ws) => {
   console.log("New connection");
@@ -45,9 +43,17 @@ wss.on("connection", async (ws) => {
           break;
         case "OUTGOING":
           break;
-        case "INCOMING":
+        case "INCOMING7":
           sessionData.incoming = true;
-          ws.send("Impulse:OpenIncoming");
+          ws.send("Impulse:OpenIncoming:7");
+          break;
+        case "INCOMING8":
+          sessionData.incoming = true;
+          ws.send("Impulse:OpenIncoming:8");
+          break;
+        case "INCOMING9":
+          sessionData.incoming = true;
+          ws.send("Impulse:OpenIncoming:9");
           break;
 
         default:
@@ -158,16 +164,31 @@ wss.on("connection", async (ws) => {
         }
         break;
       case "dialRequest":
+        var gate_address_full = json.gate_address
+        var gate_address = gate_address_full.slice(0,6)
         if (json.gate_address == sessionData.address) {
           ws.send("CSDialCheck:404");
           break;
         }
 
+        switch (gate_address_full.length) {
+          case 6:
+            var gate_code = sessionData.code;
+            break;
+          case 7:
+            var gate_code = gate_address_full.slice(6) + "@";
+            break;
+          case 8:
+            var gate_code = gate_address_full.slice(6);
+            break;
+        }
+        console.log(gate_code)
+
         var { data: data, error } = await supabase
           .from("gates")
           .select("*")
-          .eq("gate_address", json.gate_address)
-          // .eq("gate_code", json.dialed_code)
+          .eq("gate_address", gate_address)
+          .eq("gate_code", gate_code)
           .single();
         if (data == null) {
           ws.send("CSDialCheck:404");
@@ -178,14 +199,35 @@ wss.on("connection", async (ws) => {
           ws.send("CSDialCheck:403");
           break;
         } else {
-          var { data: d, error } = await supabase
-            .from("gates")
-            .update({ gate_status: "INCOMING" })
-            .eq("gate_address", json.gate_address)
-            // .eq("gate_code", json.dialed_code)
-            .select("*")
-            .single();
-
+          switch (json.gate_address.length) {
+            case 6:
+              var { data: d, error } = await supabase
+                .from("gates")
+                .update({ gate_status: "INCOMING7" })
+                .eq("gate_address", gate_address)
+                .eq("gate_code", gate_code)
+                .select("*")
+                .single();
+              break;
+            case 7:
+              var { data: d, error } = await supabase
+                .from("gates")
+                .update({ gate_status: "INCOMING8" })
+                .eq("gate_address", gate_address)
+                .eq("gate_code", gate_code)
+                .select("*")
+                .single();
+              break;
+            case 8:
+              var { data: d, error } = await supabase
+                .from("gates")
+                .update({ gate_status: "INCOMING9" })
+                .eq("gate_address", gate_address)
+                .eq("gate_code", gate_code)
+                .select("*")
+                .single();
+              break;
+          }
           dialed_session.address = d.gate_address;
           dialed_session.code = d.gate_code;
           dialed_session.host_id = d.host_id;
