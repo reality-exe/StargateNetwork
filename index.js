@@ -72,27 +72,37 @@ wss.on("connection", async (ws) => {
           ws.send("CSValidCheck:400");
           break;
         }
+        var gate_address_full = json.gate_address
+        var gate_address = gate_address_full.slice(0,6)
+        if (json.gate_address == sessionData.address) {
+          ws.send("CSDialCheck:404");
+          break;
+        }
 
-        if (json.gate_address.length > 6) {
-          let gate_code = json.gate_address.slice(0, 6);
+        switch (gate_address_full.length) {
+          case 6:
+            var gate_code = sessionData.code;
+            break;
+          case 7:
+            var gate_code = gate_address_full.slice(6) + "@";
+            break;
+          case 8:
+            var gate_code = gate_address_full.slice(6);
+            break;
         }
 
         var { data: data, error } = await supabase
           .from("gates")
           .select("*")
-          .eq("gate_address", json.gate_address)
+          .eq("gate_address", gate_address)
+          .eq("gate_code", gate_code)
           .single();
 
         if (data == null) {
           // Return 404 if there is no gate with that address
           ws.send("CSValidCheck:404");
           break;
-        } // Return 302 if the outgoing gate has a different group code from the dialing gate
-        else if (data.gate_code != sessionData.code) {
-          ws.send("CSValidCheck:302");
-          break;
-        } // Return 200 if gate exists, and is not already open
-        else if (data.gate_status == "IDLE") {
+        } else if (data.gate_status == "IDLE") {
           ws.send("CSValidCheck:200");
           break;
         } // Return 403 if gate has an active wormhole
