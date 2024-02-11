@@ -209,35 +209,13 @@ wss.on("connection", async (ws) => {
           ws.send("CSDialCheck:403");
           break;
         } else {
-          switch (json.gate_address.length) {
-            case 6:
-              var { data: d, error } = await supabase
-                .from("gates")
-                .update({ gate_status: "INCOMING7" })
-                .eq("gate_address", gate_address)
-                .eq("gate_code", gate_code)
-                .select("*")
-                .single();
-              break;
-            case 7:
-              var { data: d, error } = await supabase
-                .from("gates")
-                .update({ gate_status: "INCOMING8" })
-                .eq("gate_address", gate_address)
-                .eq("gate_code", gate_code)
-                .select("*")
-                .single();
-              break;
-            case 8:
-              var { data: d, error } = await supabase
-                .from("gates")
-                .update({ gate_status: "INCOMING9" })
-                .eq("gate_address", gate_address)
-                .eq("gate_code", gate_code)
-                .select("*")
-                .single();
-              break;
-          }
+		  var { data: d, error } = await supabase
+			.from("gates")
+			.update({ gate_status: "INCOMING" + toString(json.gate_address.length + 1) })
+			.eq("gate_address", gate_address)
+			.eq("gate_code", gate_code)
+			.select("*")
+			.single();
           dialed_session.address = d.gate_address;
           dialed_session.code = d.gate_code;
           dialed_session.host_id = d.host_id;
