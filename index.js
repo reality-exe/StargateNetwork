@@ -7,15 +7,17 @@ const wss = new WebSocketServer({ port: 9066 });
 
 const supabase = createClient(supabase_url, supabase_key);
 
-var db_channel = supabase.channel("events");
 
 async function flushDatabase() {
-  await supabase.from("gates").delete().neq("gate_status", "PLACEHOLDER");
+	await supabase.from("gates").delete().neq("gate_status", "PLACEHOLDER");
 }
 flushDatabase();
 
 wss.on("connection", async (ws) => {
   console.log("New connection");
+
+  var db_channel = supabase.channel("events");
+  
   var sessionData = {
     address: "",
     code: "",
