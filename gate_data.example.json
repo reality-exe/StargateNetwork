@@ -1,3 +1,12 @@
 {
-    
+  "type": "requestAddress",
+  "gate_address": "123456",
+  "gate_code": "M@",
+  "host_id": "U-localhost",
+  "is_headless": true,
+  "session_id": "test.local",
+  "current_users": 0,
+  "max_users": 0,
+  "public": false,
+  "gate_name": "test 1"
 }
