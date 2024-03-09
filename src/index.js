@@ -146,7 +146,6 @@ wsServer.on("request", (request) => {
                 let data = json.data.payload;
 
                 if (data.gate_address == session_cache.gate_address) {
-                  console.log(data);
                   switch (data.gate_status) {
                     case "IDLE":
                       if (session_cache.incoming) {
