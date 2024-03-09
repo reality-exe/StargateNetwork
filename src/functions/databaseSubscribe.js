@@ -1,5 +1,7 @@
 require("dotenv").config();
-const { Client, Account } = require("appwrite");
+const { Client, Account, Databases } = require("appwrite");
+const { WindowMock } = require("window-mock");
+
 const client = new Client()
   .setEndpoint(process.env.appwrite_url)
   .setProject(process.env.appwrite_project);
@@ -9,10 +11,5 @@ module.exports = {
   /**
    * @param {*} session_cache
    */
-  dbSubscribe: function (session_cache) {
-    async function gateCheck() {
-      console.log(session_cache.gate_address)
-    }
-    return gateCheck();
-  },
+  dbSubscribe: function (client, database, session_cache) {},
 };

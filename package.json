@@ -15,5 +15,8 @@
     "http": "^0.0.1-security",
     "node-appwrite": "^11.1.1",
     "websocket": "^1.0.34"
+  },
+  "devDependencies": {
+    "window-mock": "^0.1.0"
   }
 }
