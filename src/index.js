@@ -266,7 +266,6 @@ wsServer.on("request", (request) => {
       `${new Date()} | Connection closed from ${request.origin}. Code: ${code}`
     );
     if (session_cache.gate_address != null) {
-      console.log(session_cache);
       console.log(
         `${new Date()} | Removing gate entry from database (${
           session_cache.gate_address
