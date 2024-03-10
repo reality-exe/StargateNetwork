@@ -57,10 +57,10 @@ server.listen(6262, async () => {
 
 wsServer.on("request", (request) => {
   let connection = request.accept(null);
-  var databaseSub;
   var wsc = new WebSocketClient();
-  var test1 = function () {};
-  console.log(`${new Date()} | Connection opened from ${request.origin}`);
+  console.log(
+    `${new Date()} | Connection opened from ${request.remoteAddress}`
+  );
   var session_cache = {
     gate_address: null,
     gate_code: null,
@@ -79,16 +79,16 @@ wsServer.on("request", (request) => {
     switch (json.type) {
       case "requestAddress":
         console.log(
-          `${new Date()} | Address request recieved from ${request.origin} (${
-            json.gate_address
-          })`
+          `${new Date()} | Address request recieved from ${
+            request.remoteAddress
+          } (${json.gate_address})`
         );
         let gate = await getGate(database, json.gate_address);
         if (gate != undefined) {
           console.log(
             `${new Date()} | Address "${
               json.gate_address
-            }" denied, gate already exists. Origin: ${request.origin}`
+            }" denied, gate already exists. Origin: ${request.remoteAddress}`
           );
           connection.send("403");
           break;
@@ -232,8 +232,8 @@ wsServer.on("request", (request) => {
           session_cache.connection_status.gate_address = u_gate.gate_address;
           session_cache.connection_status.gate_code = u_gate.gate_code;
           session_cache.connection_status.gate_iris = false;
-          connection.send("CSDialCheck:200")
-          connection.send(`CSDialedSessionURL:${u_gate.session_url}`)
+          connection.send("CSDialCheck:200");
+          connection.send(`CSDialedSessionURL:${u_gate.session_url}`);
         }
         break;
       case "closeWormhole":
@@ -251,11 +251,13 @@ wsServer.on("request", (request) => {
         session_cache.connection_status.gate_iris = false;
         break;
       case "updateData":
-        let data = await updateGate(database, session_cache.gate_address, {
-          gate_status: json.gate_status,
-          active_users: json.currentUsers,
-          max_users: json.maxUsers,
-        });
+        if (session_cache.gate_address != null) {
+          let data = await updateGate(database, session_cache.gate_address, {
+            gate_status: json.gate_status,
+            active_users: json.currentUsers,
+            max_users: json.maxUsers,
+          });
+        }
         break;
       default:
         break;
@@ -263,7 +265,9 @@ wsServer.on("request", (request) => {
   });
   connection.on("close", (code, desc) => {
     console.log(
-      `${new Date()} | Connection closed from ${request.origin}. Code: ${code}`
+      `${new Date()} | Connection closed from ${
+        request.remoteAddress
+      }. Code: ${code}`
     );
     if (session_cache.gate_address != null) {
       console.log(
