@@ -84,6 +84,10 @@ wsServer.on("request", (request) => {
             request.remoteAddress
           } (${json.gate_address})`
         );
+        if (json.session_id == session_cache.session_url) {
+          connection.send('{ code: 200, message: "Address accepted" }');
+          break;
+        }
         let gate = await getGate(database, json.gate_address);
         if (gate != undefined) {
           console.log(
@@ -94,10 +98,7 @@ wsServer.on("request", (request) => {
           connection.send("403");
           break;
         }
-        if (json.session_id == session_cache.session_url) {
-          connection.send('{ code: 200, message: "Address accepted" }');
-          break;
-        }
+
         let new_gate = await createGate(
           database,
           json.gate_address,
