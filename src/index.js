@@ -65,6 +65,7 @@ wsServer.on("request", (request) => {
     gate_address: null,
     gate_code: null,
     gate_owner: null,
+    session_url: null,
     incoming: false,
     connection_status: {
       outgoing: false,
@@ -93,6 +94,10 @@ wsServer.on("request", (request) => {
           connection.send("403");
           break;
         }
+        if (gate.session_url == session_cache.session_url) {
+          connection.send('{ code: 200, message: "Address accepted" }');
+          break;
+        }
         let new_gate = await createGate(
           database,
           json.gate_address,
@@ -108,6 +113,7 @@ wsServer.on("request", (request) => {
         session_cache.gate_address = json.gate_address;
         session_cache.gate_code = json.gate_code;
         session_cache.gate_owner = json.host_id;
+        session_cache.session_url = json.session_id;
         connection.send(`{ code: 200, message: "Address accepted" }`);
         console.log(
           `${new Date()} | Address request accepted, adding ${
