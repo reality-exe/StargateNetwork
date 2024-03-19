@@ -230,6 +230,8 @@ wsServer.on("request", (request) => {
         if (c_gate == null) {
           connection.send("CSDialCheck:404");
           break;
+        } else if (c_gate.active_players == c_gate.max_players) {
+          connection.send("CSDialCheck:403");
         } else {
           let u_gate = await updateGate(database, gate_address, {
             gate_status: `INCOMING${gate_address_full.length + 1}`,
