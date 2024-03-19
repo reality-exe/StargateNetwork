@@ -94,7 +94,7 @@ wsServer.on("request", (request) => {
           connection.send("403");
           break;
         }
-        if (gate.session_url == session_cache.session_url) {
+        if (json.session_id == session_cache.session_url) {
           connection.send('{ code: 200, message: "Address accepted" }');
           break;
         }
