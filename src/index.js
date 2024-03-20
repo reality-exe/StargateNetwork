@@ -228,7 +228,6 @@ wsServer.on("request", (request) => {
             break;
         }
         let c_gate = await getGate(database, gate_address);
-        console.log(c_gate.active_users);
         if (c_gate == null) {
           connection.send("CSDialCheck:404");
           break;
