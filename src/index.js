@@ -43,16 +43,16 @@ server.listen(6262, async () => {
 
   console.log(`${new Date()} | Checking network database...`);
   let documents = await database.listDocuments("sgn", "gates");
-  if (documents.total != 0) {
-    for (let i = 0; i < documents.documents.length; i++) {
-      const element = documents.documents[i];
-      console.log(`${new Date()} | Removing ${element.$id}...`);
-      await database.deleteDocument("sgn", "gates", element.$id);
-    }
-    console.log(`${new Date()} | Cleared database`);
-  } else {
-    console.log(`${new Date()} | No gates in database`);
-  }
+  // if (documents.total != 0) {
+    // for (let i = 0; i < documents.documents.length; i++) {
+      // const element = documents.documents[i];
+      // console.log(`${new Date()} | Removing ${element.$id}...`);
+      // await database.deleteDocument("sgn", "gates", element.$id);
+    // }
+    // console.log(`${new Date()} | Cleared database`);
+  // } else {
+    // console.log(`${new Date()} | No gates in database`);
+  // }
 });
 
 wsServer.on("request", (request) => {
@@ -228,10 +228,11 @@ wsServer.on("request", (request) => {
             break;
         }
         let c_gate = await getGate(database, gate_address);
+        console.log(c_gate.active_users)
         if (c_gate == null) {
           connection.send("CSDialCheck:404");
           break;
-        } else if (c_gate.active_players == c_gate.max_players) {
+        } else if (c_gate.active_users >= c_gate.max_users) {
           connection.send("CSDialCheck:403");
         } else {
           let u_gate = await updateGate(database, gate_address, {
