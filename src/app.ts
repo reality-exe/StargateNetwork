@@ -90,7 +90,6 @@ wss.on("connection", async (wsc, req) => {
     .subscribe<Relay>("*", (data) => {
       if (data.action == "create") {
         if (data.record.to == session_cache.gate_address) {
-          console.log(data);
           wsc.send(data.record.relay);
         }
       }
