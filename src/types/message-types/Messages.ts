@@ -32,10 +32,16 @@ export type UpdateData = {
   irisState: boolean;
 };
 
+export type UpdateIris = {
+  type: string;
+  iris_state: string;
+};
+
 export enum Type {
   RequestAddress = "requestAddress",
   ValidateAddress = "validateAddress",
   DialRequest = "dialRequest",
   UpdateData = "updateData",
   CloseWormhole = "closeWormhole",
+  UpdateIris = "updateIris",
 }

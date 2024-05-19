@@ -5,6 +5,7 @@ import {
   RequestAddress,
   Type,
   UpdateData,
+  UpdateIris,
   ValidateAddress,
 } from "./types/message-types/Messages";
 import pb, { findGate } from "./services/pocketbase.service";
@@ -34,8 +35,9 @@ wss.on("connection", async (wsc, req) => {
     gate_code: "",
     gate_owner: "",
     session_url: "",
-    gate_status: GateStatusCache.Idle,
+    gate_status: GateStatus.IDLE,
     connection_status: {
+      gate_status: GateStatusCache.Idle,
       gate_id: "",
       gate_address: "",
       gate_code: "",
@@ -46,39 +48,51 @@ wss.on("connection", async (wsc, req) => {
   let unsub_sg = await pb
     .collection("stargates")
     .subscribe<Stargate>("*", (data) => {
+      if (
+        data.record.gate_address == session_cache.connection_status.gate_address
+      ) {
+        wsc.send(`IrisUpdate:${data.record.iris_state}`);
+      }
       if (data.record.gate_address != session_cache.gate_address) return;
-      if (data.record.gate_status != "OPEN") {
-        switch (data.record.gate_status) {
-          case GateStatus.IDLE:
-            if (session_cache.gate_status == GateStatusCache.Incoming) {
-              session_cache.gate_status = GateStatusCache.Idle;
-              wsc.send("Impulse:CloseWormhole");
-              break;
-            }
+
+      switch (data.record.gate_status) {
+        case GateStatus.IDLE:
+          if (
+            session_cache.connection_status.gate_status ==
+            GateStatusCache.Incoming
+          ) {
+            session_cache.connection_status.gate_status = GateStatusCache.Idle;
+            wsc.send("Impulse:CloseWormhole");
             break;
-          case GateStatus.INCOMING7:
-            session_cache.gate_status = GateStatusCache.Incoming;
-            wsc.send("Impulse:OpenIncoming:7");
-            break;
-          case GateStatus.INCOMING8:
-            session_cache.gate_status = GateStatusCache.Incoming;
-            wsc.send("Impulse:OpenIncoming:8");
-            break;
-          case GateStatus.INCOMING9:
-            session_cache.gate_status = GateStatusCache.Incoming;
-            wsc.send("Impulse:OpenIncoming:9");
-            break;
-          default:
-            break;
-        }
+          }
+          break;
+        case GateStatus.INCOMING7:
+          session_cache.connection_status.gate_status =
+            GateStatusCache.Incoming;
+          wsc.send("Impulse:OpenIncoming:7");
+          break;
+        case GateStatus.INCOMING8:
+          session_cache.connection_status.gate_status =
+            GateStatusCache.Incoming;
+          wsc.send("Impulse:OpenIncoming:8");
+          break;
+        case GateStatus.INCOMING9:
+          session_cache.connection_status.gate_status =
+            GateStatusCache.Incoming;
+          wsc.send("Impulse:OpenIncoming:9");
+          break;
+        default:
+          break;
       }
     });
   let unsub_relay = await pb
     .collection("stargate_relay")
     .subscribe<Relay>("*", (data) => {
-      console.log(data);
-      if (data.record.to == session_cache.gate_address) {
-        wsc.send(data.record.relay);
+      if (data.action == "create") {
+        if (data.record.to == session_cache.gate_address) {
+          console.log(data);
+          wsc.send(data.record.relay);
+        }
       }
     });
   wsc.on("close", async (code, reason) => {
@@ -182,8 +196,8 @@ wss.on("connection", async (wsc, req) => {
           if (!v_gate) {
             wsc.send("CSValidCheck:404");
             break;
-          } else if (session_cache.gate_code != gate_code) {
-            wsc.send("CSValidCheck:302z");
+          } else if (v_gate.gate_code != gate_code) {
+            wsc.send("CSValidCheck:302");
             break;
           } else if (v_gate.gate_status == GateStatus.IDLE) {
             wsc.send("CSValidCheck:200");
@@ -243,7 +257,9 @@ wss.on("connection", async (wsc, req) => {
               .update<Stargate>(d_gate.id, {
                 gate_status: `INCOMING${gate_address_full.length + 1}`,
               });
-            session_cache.gate_status = GateStatusCache.Outgoing;
+            session_cache.connection_status.gate_status =
+              GateStatusCache.Outgoing;
+            session_cache.gate_status = GateStatus.OPEN;
             session_cache.connection_status.gate_id = u_gate.id;
             session_cache.connection_status.gate_address = u_gate.gate_address;
             session_cache.connection_status.gate_code = u_gate.gate_code;
@@ -254,7 +270,11 @@ wss.on("connection", async (wsc, req) => {
           }
           break;
         case Type.CloseWormhole:
-          if (session_cache.gate_status != GateStatusCache.Outgoing) break;
+          if (
+            session_cache.connection_status.gate_status !=
+            GateStatusCache.Outgoing
+          )
+            break;
           let t_gate = await pb
             .collection("stargates")
             .update(session_cache.gate_id, { gate_status: "IDLE" });
@@ -264,30 +284,43 @@ wss.on("connection", async (wsc, req) => {
               gate_status: "IDLE",
             });
 
-          session_cache.gate_status = GateStatusCache.Idle;
+          session_cache.connection_status.gate_status = GateStatusCache.Idle;
           session_cache.connection_status.gate_id = "";
           session_cache.connection_status.gate_address = "";
           session_cache.connection_status.gate_code = "";
           session_cache.connection_status.gate_iris = false;
         case Type.UpdateData:
-          let u_data = json as UpdateData
-          let u_gate = await pb.collection("stargates").update(session_cache.gate_id, {
-            gate_status: u_data.gate_status,
-            active_users: u_data.currentUsers,
-            max_users: u_data.maxUsers
-          })
+          let u_data = json as UpdateData;
+          let u_gate = await pb
+            .collection("stargates")
+            .update(session_cache.gate_id, {
+              gate_status: u_data.gate_status,
+              active_users: u_data.currentUsers,
+              max_users: u_data.maxUsers,
+            });
           break;
-          default:
+        case Type.UpdateIris:
+          let i_data = json as UpdateIris;
+          let i_gate = await pb
+            .collection("stargates")
+            .update(session_cache.gate_id, {
+              iris_state: i_data.iris_state,
+            });
+          break;
+        default:
           break;
       }
       return;
     } else if (msg.slice(0, 3) == "IDC") {
       console.log("IDC Transmission");
-      let response = await pb.collection("stargate_relay").create({
-        from: session_cache.gate_address,
+      const data = {
         relay: msg,
+        from: session_cache.gate_address,
         to: session_cache.connection_status.gate_address,
-      });
+      };
+
+      const record = await pb.collection("stargate_relay").create(data);
+      console.log(record);
       return;
     } else {
       console.log("Message unknown");
