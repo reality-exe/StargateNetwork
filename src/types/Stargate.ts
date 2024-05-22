@@ -19,6 +19,8 @@ export type Stargate = {
   public_gate: boolean;
   session_name: string;
   session_url: string;
+  updated: Date;
+  created: Date;
 };
 
 export enum GateStatus {
