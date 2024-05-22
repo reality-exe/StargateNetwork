@@ -112,6 +112,8 @@ wss.on("connection", async (wsc, req) => {
     let msg = stream.toString();
     if (msg.slice(0, 1) == "{") {
       let json = JSON.parse(msg);
+      if (session_cache.gate_id == "" && json.type != Type.RequestAddress)
+        return;
       switch (json.type) {
         case Type.RequestAddress:
           let data = json as RequestAddress;
@@ -123,13 +125,28 @@ wss.on("connection", async (wsc, req) => {
           );
           let gate_check = await findGate(data.gate_address);
           if (gate_check) {
-            console.log(
-              `${new Date()} | Denied gate address ${data.gate_address} from ${
-                req.socket.remoteAddress
-              }`
-            );
-            wsc.send("403");
-            break;
+            let updated_time = new Date(gate_check.updated);
+            let currentTimestamp = new Date();
+            let timeDifference =
+              currentTimestamp.getTime() - updated_time.getTime();
+            if (timeDifference < 300000) {
+              console.log(
+                `${new Date()} | Denied address ${
+                  data.gate_address
+                }. Address already taken.`
+              );
+              wsc.send("403");
+              break;
+            } else {
+              await pb
+                .collection("stargates")
+                .delete(gate_check.id)
+                .then(() => {
+                  console.log(
+                    `Deleted a stale entry (${gate_check.gate_address})`
+                  );
+                });
+            }
           }
 
           let new_gate = {
@@ -289,6 +306,7 @@ wss.on("connection", async (wsc, req) => {
           session_cache.connection_status.gate_code = "";
           session_cache.connection_status.gate_iris = false;
         case Type.UpdateData:
+          if (session_cache.gate_id == "") return;
           let u_data = json as UpdateData;
           let u_gate = await pb
             .collection("stargates")
@@ -299,12 +317,19 @@ wss.on("connection", async (wsc, req) => {
             });
           break;
         case Type.UpdateIris:
+          if (session_cache.gate_id == "") return;
           let i_data = json as UpdateIris;
           let i_gate = await pb
             .collection("stargates")
             .update(session_cache.gate_id, {
               iris_state: i_data.iris_state,
             });
+          break;
+        case Type.KeepAlive:
+          if (session_cache.gate_id == "") return;
+          let ka_response = pb
+            .collection("stargates")
+            .update(session_cache.gate_id, { field_to_update: Math.random() });
           break;
         default:
           break;
