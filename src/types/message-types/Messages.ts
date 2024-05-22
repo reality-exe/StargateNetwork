@@ -44,4 +44,5 @@ export enum Type {
   UpdateData = "updateData",
   CloseWormhole = "closeWormhole",
   UpdateIris = "updateIris",
+  KeepAlive = "keepAlive",
 }
