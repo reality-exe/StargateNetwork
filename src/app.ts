@@ -357,3 +357,22 @@ wss.on("listening", () => {
     `${new Date()} | Server is now listening on port ${process.env.WS_PORT}`
   );
 });
+
+// Recursive gate check
+setInterval(async () => {
+  let res = await pb.collection("stargates").getFullList<Stargate>();
+  res.forEach(async (stargate) => {
+    let updated_time = new Date(stargate.updated);
+    let currentTimestamp = new Date();
+    let timeDifference = currentTimestamp.getTime() - updated_time.getTime();
+    if (timeDifference < 300000) {
+    } else {
+      await pb
+        .collection("stargates")
+        .delete(stargate.id)
+        .then(() => {
+          console.log(`Deleted a stale entry (${stargate.gate_address})`);
+        });
+    }
+  });
+}, 300000);
