@@ -1,0 +1,426 @@
+[
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "users_avatar",
+        "name": "avatar",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ],
+          "thumbs": [
+            "100x100",
+            "128x128",
+            "60x60"
+          ],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      },
+      {
+        "system": false,
+        "id": "vgionxq4",
+        "name": "tags",
+        "type": "select",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 3,
+          "values": [
+            "admin",
+            "standard",
+            "owner"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "t3fwviku",
+        "name": "discord_id",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "id = @request.auth.id || @request.auth.tags ~ \"admin\"",
+    "viewRule": "id = @request.auth.id || @request.auth.tags ~ \"admin\"",
+    "createRule": "",
+    "updateRule": "id = @request.auth.id || @request.auth.tags ~ \"admin\"",
+    "deleteRule": "id = @request.auth.id || @request.auth.tags ~ \"admin\"",
+    "options": {
+      "allowEmailAuth": true,
+      "allowOAuth2Auth": true,
+      "allowUsernameAuth": true,
+      "exceptEmailDomains": null,
+      "manageRule": "@request.auth.tags ~ \"admin\"",
+      "minPasswordLength": 8,
+      "onlyEmailDomains": null,
+      "onlyVerified": false,
+      "requireEmail": true
+    }
+  },
+  {
+    "id": "5mi9aigq1vllq5y",
+    "name": "files",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "4kdejsin",
+        "name": "file",
+        "type": "file",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "mimeTypes": [],
+          "thumbs": [],
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "protected": false
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "dxgdnxpvhk9ild4",
+    "name": "stargate_relay",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "wk5gkeds",
+        "name": "relay",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "r8otilkx",
+        "name": "from",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "bxoqe46h",
+        "name": "to",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {}
+  },
+  {
+    "id": "91obylcwcwbu0ls",
+    "name": "stargates",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "qlqpcius",
+        "name": "gate_address",
+        "type": "text",
+        "required": true,
+        "presentable": true,
+        "unique": false,
+        "options": {
+          "min": 6,
+          "max": 6,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "8oq4gjpa",
+        "name": "gate_code",
+        "type": "text",
+        "required": true,
+        "presentable": true,
+        "unique": false,
+        "options": {
+          "min": 2,
+          "max": 2,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ioiy8miw",
+        "name": "owner_name",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "oqcoft40",
+        "name": "session_url",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "ikvytyix",
+        "name": "session_name",
+        "type": "text",
+        "required": true,
+        "presentable": true,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "05f9c87b",
+        "name": "active_users",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "jtdog21i",
+        "name": "max_users",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      },
+      {
+        "system": false,
+        "id": "ajpkfzkn",
+        "name": "public_gate",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "1r9t9aj2",
+        "name": "is_headless",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "fecfighk",
+        "name": "iris_state",
+        "type": "bool",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "system": false,
+        "id": "ukun4xqr",
+        "name": "gate_status",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "IDLE",
+            "INCOMING7",
+            "INCOMING8",
+            "INCOMING9",
+            "OPEN"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "7nzykylr",
+        "name": "field_to_update",
+        "type": "number",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": false
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_idouOtS` ON `stargates` (`gate_address`)"
+    ],
+    "listRule": "public_gate = true || @request.auth.tags ~ \"admin\"",
+    "viewRule": "",
+    "createRule": "@request.auth.tags ~ \"admin\"",
+    "updateRule": "@request.auth.managed_stargates ~ gate_address || @request.auth.tags ~ \"admin\"",
+    "deleteRule": "@request.auth.tags ~ \"admin\"",
+    "options": {}
+  },
+  {
+    "id": "hz34afgc1zhtkr5",
+    "name": "stargate_view",
+    "type": "view",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "zzjmiucu",
+        "name": "gate_address",
+        "type": "text",
+        "required": true,
+        "presentable": true,
+        "unique": false,
+        "options": {
+          "min": 6,
+          "max": 6,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "24ke4hl1",
+        "name": "gate_code",
+        "type": "text",
+        "required": true,
+        "presentable": true,
+        "unique": false,
+        "options": {
+          "min": 2,
+          "max": 2,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "2f9vanym",
+        "name": "gate_status",
+        "type": "select",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "IDLE",
+            "INCOMING7",
+            "INCOMING8",
+            "INCOMING9",
+            "OPEN"
+          ]
+        }
+      },
+      {
+        "system": false,
+        "id": "sr43ha7s",
+        "name": "owner_name",
+        "type": "text",
+        "required": true,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "options": {
+      "query": "SELECT gate_address as id, gate_address, gate_code, gate_status, owner_name from stargates WHERE public_gate == true"
+    }
+  }
+]
