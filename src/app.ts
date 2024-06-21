@@ -103,6 +103,12 @@ wss.on("connection", async (wsc, req) => {
     await unsub_sg();
     await unsub_relay();
 
+    if (session_cache.connection_status.gate_status == GateStatusCache.Outgoing) {
+      pb.collection("stargates").update(session_cache.connection_status.gate_id, {
+        gate_status: "IDLE"
+      })
+    }
+
     if (session_cache.gate_id != "") {
       pb.collection("stargates").delete(session_cache.gate_id);
     }
