@@ -27,7 +27,7 @@ wss.on("error", console.error);
 
 wss.on("connection", async (wsc, req) => {
   console.log(
-    `${new Date()} | New connection from ${req.socket.remoteAddress}`
+    `${new Date()} | New connection from ${req.socket.remoteAddress}`,
   );
   let session_cache: SessionCache = {
     gate_id: "",
@@ -98,15 +98,20 @@ wss.on("connection", async (wsc, req) => {
     console.log(
       `${new Date()} | Connection from ${
         req.socket.remoteAddress
-      } closed. Code: ${code}`
+      } closed. Code: ${code}`,
     );
     await unsub_sg();
     await unsub_relay();
 
-    if (session_cache.connection_status.gate_status == GateStatusCache.Outgoing) {
-      pb.collection("stargates").update(session_cache.connection_status.gate_id, {
-        gate_status: "IDLE"
-      })
+    if (
+      session_cache.connection_status.gate_status == GateStatusCache.Outgoing
+    ) {
+      pb.collection("stargates").update(
+        session_cache.connection_status.gate_id,
+        {
+          gate_status: "IDLE",
+        },
+      );
     }
 
     if (session_cache.gate_id != "") {
@@ -127,10 +132,27 @@ wss.on("connection", async (wsc, req) => {
           console.log(
             `${new Date()} | New address request: ${data.gate_address} from ${
               req.socket.remoteAddress
-            }`
+            }`,
           );
           let gate_check = await findGate(data.gate_address);
           if (gate_check) {
+            if (gate_check.session_url === data.session_id) {
+              console.log(
+                `${new Date()} | Gate address exists, but session id is the same. Allowing usage`,
+              );
+              session_cache.gate_id = gate_check.id;
+              session_cache.gate_address = data.gate_address;
+              session_cache.gate_code = data.gate_code;
+              session_cache.gate_owner = data.host_id;
+              session_cache.session_url = data.session_id;
+              let ka_response = pb
+                .collection("stargates")
+                .update(session_cache.gate_id, {
+                  field_to_update: Math.random(),
+                });
+              wsc.send(`{code: 200, message: "Address accepted" }`);
+              break;
+            }
             let updated_time = new Date(gate_check.updated);
             let currentTimestamp = new Date();
             let timeDifference =
@@ -139,7 +161,7 @@ wss.on("connection", async (wsc, req) => {
               console.log(
                 `${new Date()} | Denied address ${
                   data.gate_address
-                }. Address already taken.`
+                }. Address already taken.`,
               );
               wsc.send("403");
               break;
@@ -149,7 +171,7 @@ wss.on("connection", async (wsc, req) => {
                 .delete(gate_check.id)
                 .then(() => {
                   console.log(
-                    `Deleted a stale entry (${gate_check.gate_address})`
+                    `Deleted a stale entry (${gate_check.gate_address})`,
                   );
                 });
             }
@@ -172,7 +194,7 @@ wss.on("connection", async (wsc, req) => {
           console.log(
             `${new Date()} | Accepted gate address ${data.gate_address} from ${
               req.socket.remoteAddress
-            }`
+            }`,
           );
           let response = await pb.collection("stargates").create(new_gate);
           session_cache.gate_id = response.id;
@@ -191,7 +213,7 @@ wss.on("connection", async (wsc, req) => {
             break;
           }
           console.log(
-            `${new Date()} | Validate Address: ${v_data.gate_address}`
+            `${new Date()} | Validate Address: ${v_data.gate_address}`,
           );
 
           var gate_code = "";
@@ -241,7 +263,7 @@ wss.on("connection", async (wsc, req) => {
           console.log(
             `${new Date()} | Dial request from ${
               session_cache.gate_address
-            } to ${gate_address_full}`
+            } to ${gate_address_full}`,
           );
           var gate_code = "";
           if (gate_address == session_cache.gate_address) {
@@ -360,7 +382,7 @@ wss.on("connection", async (wsc, req) => {
 
 wss.on("listening", () => {
   console.log(
-    `${new Date()} | Server is now listening on port ${process.env.WS_PORT}`
+    `${new Date()} | Server is now listening on port ${process.env.WS_PORT}`,
   );
 });
 
