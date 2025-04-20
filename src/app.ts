@@ -115,7 +115,10 @@ wss.on("connection", async (wsc, req) => {
     }
 
     if (session_cache.gate_id != "") {
-      pb.collection("stargates").delete(session_cache.gate_id);
+      pb.collection("stargates").delete(session_cache.gate_id).catch(r => {
+        // Catch just to not crash the server
+        console.log(r)
+      });
     }
   });
 
@@ -408,6 +411,9 @@ setInterval(async () => {
         .delete(stargate.id)
         .then(() => {
           console.log(`Deleted a stale entry (${stargate.gate_address})`);
+        }).catch(r => {
+          // Catch just to not crash the server
+          console.log(r)
         });
     }
   });
