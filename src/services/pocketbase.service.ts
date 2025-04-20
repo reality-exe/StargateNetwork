@@ -3,7 +3,7 @@ import PocketBase from "pocketbase/cjs";
 import { Stargate } from "../types/Stargate";
 const { WS_PORT, PB_EMAIL, PB_ENDPOINT, PB_PASSWORD } = process.env;
 
-const pb = new PocketBase("https://aor-db.rxserver.net");
+const pb = new PocketBase(PB_ENDPOINT);
 
 async function auth() {
   await pb.admins
