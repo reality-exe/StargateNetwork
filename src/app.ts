@@ -295,6 +295,14 @@ wss.on("connection", async (wsc, req) => {
           } else if (d_gate.active_users >= d_gate.max_users) {
             wsc.send("CSDialCheck:403");
             break;
+          } else if (
+            d_gate.gate_status == GateStatus.INCOMING7 ||
+            d_gate.gate_status == GateStatus.INCOMING8 ||
+            d_gate.gate_status == GateStatus.INCOMING9 ||
+            d_gate.gate_status == GateStatus.OPEN
+          ) {
+            wsc.send("CSDialCheck:403");
+            break;
           } else {
             let u_gate = await pb
               .collection("stargates")
