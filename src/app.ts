@@ -67,16 +67,31 @@ wss.on("connection", async (wsc, req) => {
           }
           break;
         case GateStatus.INCOMING7:
+          if (
+            session_cache.connection_status.gate_status ==
+            GateStatusCache.Incoming
+          )
+            break;
           session_cache.connection_status.gate_status =
             GateStatusCache.Incoming;
           wsc.send("Impulse:OpenIncoming:7");
           break;
         case GateStatus.INCOMING8:
+          if (
+            session_cache.connection_status.gate_status ==
+            GateStatusCache.Incoming
+          )
+            break;
           session_cache.connection_status.gate_status =
             GateStatusCache.Incoming;
           wsc.send("Impulse:OpenIncoming:8");
           break;
         case GateStatus.INCOMING9:
+          if (
+            session_cache.connection_status.gate_status ==
+            GateStatusCache.Incoming
+          )
+            break;
           session_cache.connection_status.gate_status =
             GateStatusCache.Incoming;
           wsc.send("Impulse:OpenIncoming:9");
@@ -115,10 +130,12 @@ wss.on("connection", async (wsc, req) => {
     }
 
     if (session_cache.gate_id != "") {
-      pb.collection("stargates").delete(session_cache.gate_id).catch(r => {
-        // Catch just to not crash the server
-        console.log(r)
-      });
+      pb.collection("stargates")
+        .delete(session_cache.gate_id)
+        .catch((r) => {
+          // Catch just to not crash the server
+          console.log(r);
+        });
     }
   });
 
@@ -411,9 +428,10 @@ setInterval(async () => {
         .delete(stargate.id)
         .then(() => {
           console.log(`Deleted a stale entry (${stargate.gate_address})`);
-        }).catch(r => {
+        })
+        .catch((r) => {
           // Catch just to not crash the server
-          console.log(r)
+          console.log(r);
         });
     }
   });
