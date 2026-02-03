@@ -15,6 +15,7 @@ import {
   SessionCache,
 } from "./types/message-types/SessionCache";
 import { Relay } from "./types/Relay";
+import { log } from "console";
 
 global.EventSource = require("eventsource");
 
@@ -142,7 +143,13 @@ wss.on("connection", async (wsc, req) => {
   wsc.on("message", async (stream) => {
     let msg = stream.toString();
     if (msg.slice(0, 1) == "{") {
-      let json = JSON.parse(msg);
+      let json: any
+      try {
+        json = JSON.parse(msg);
+      } catch(error) {
+        console.log("someone fucked something up on the gate\n--- ERROR ---" + msg + "\n --- ^ERROR^ ---")
+        return;
+      }
       if (session_cache.gate_id == "" && json.type != Type.RequestAddress)
         return;
       switch (json.type) {
